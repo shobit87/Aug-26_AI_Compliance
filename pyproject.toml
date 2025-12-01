@@ -1,0 +1,30 @@
+[project]
+name = "ai-compliance-agent"
+version = "0.1.0"
+description = "LangGraph-based multi-agent workflow for automated compliance checks"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain>=0.3.0",
+    "langgraph>=0.2.0",
+    "pydantic>=2.4.0",
+    "python-dotenv>=1.0.0",
+    "typer>=0.12.0",
+    "rich>=13.0.0",
+    "python-docx>=0.8.11",
+    "pypdf>=3.0.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "python-multipart>=0.0.9",
+    "streamlit>=1.38.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0.0"]
+build-backend = "setuptools.build_meta"
