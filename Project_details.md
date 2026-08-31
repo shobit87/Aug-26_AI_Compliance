@@ -57,6 +57,12 @@ The implementer loop is limited by `implementation_retries`, preventing an accid
 
 **Why it is needed:** The README is intentionally concise. This document explains internal responsibilities, boundaries, agents, data flow, and maintenance considerations in enough detail for onboarding and interviews.
 
+### `SOC2_control_catalog.md`
+
+**Purpose:** Human-readable reference for all 33 paraphrased SOC 2 Security/Common Criteria controls, review objectives, default severities, and example evidence.
+
+**Why it is needed:** Reviewers can inspect the catalog without reading Python. It also documents evidence quality, severity conventions, licensing boundaries, and maintenance rules.
+
 ### `pyproject.toml`
 
 **Purpose:** Python package and dependency configuration.
@@ -133,13 +139,13 @@ All maintained application code lives under `src/ai_compliance_agent/`.
 
 ### `src/ai_compliance_agent/controls.py`
 
-**Purpose:** Stores the focused SOC 2 change-management control catalog.
+**Purpose:** Stores the complete paraphrased 33-control SOC 2 Security/Common Criteria catalog and derives focused review profiles from it.
 
-**Current controls:** CC8.1, CC6.1, CC7.2, CC7.4, and CC3.2.
+**Active change-management profile:** CC8.1, CC6.1, CC7.2, CC7.4, and CC3.2.
 
 **Why it is needed:** Findings should map to explicit controls rather than vague compliance language. Keeping the catalog separate makes it reviewable, testable, and replaceable with a versioned external catalog later.
 
-**Important limitation:** This is a portfolio-sized subset, not the complete SOC 2 Trust Services Criteria.
+**Important limitation:** Entries are original implementation summaries, not licensed AICPA criteria text. The application evaluates only the focused change-management profile by default.
 
 ### `src/ai_compliance_agent/analyzers.py`
 

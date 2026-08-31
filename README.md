@@ -9,7 +9,7 @@ An interview-focused LangGraph workflow for reviewing change-management document
 - Typed LangGraph state and modular coordinator, reviewer, planner, implementer, critic, compliance, and documentation nodes.
 - A real bounded critic repair loop: rejected implementation drafts return to the implementer and are reviewed again.
 - Evidence-backed findings with control ID, severity, recommendation, and confidence.
-- SOC 2 change-management catalog covering CC8.1, CC6.1, CC7.2, CC7.4, and CC3.2.
+- A paraphrased 33-control SOC 2 Security/Common Criteria catalog, with a focused change-management profile covering CC8.1, CC6.1, CC7.2, CC7.4, and CC3.2.
 - Deterministic analysis for tests and offline demos.
 - Optional OpenAI structured-output analysis using the Responses API.
 - PDF, DOCX, TXT, and Markdown ingestion with type checks and a 10 MB upload limit.
@@ -24,6 +24,8 @@ An interview-focused LangGraph workflow for reviewing change-management document
 - The deterministic analyzer uses transparent keyword evidence and is not an AI model.
 - Model-backed findings require human review and can be incorrect.
 - Authentication, persistent audit storage, rate limiting, and enterprise retention controls are not included.
+
+See [SOC2_control_catalog.md](SOC2_control_catalog.md) for objectives, evidence examples, severity conventions, and maintenance rules.
 
 ## Setup
 
