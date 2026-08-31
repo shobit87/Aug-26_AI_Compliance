@@ -26,6 +26,14 @@ def documentation_agent(state: WorkflowState) -> WorkflowState:
     if recommendations:
         summary.append("\nDocument Recommendations:")
         summary.extend(f"- {rec}" for rec in recommendations)
+    findings = updated.get("compliance_findings", [])
+    if findings:
+        summary.append("\nControl Findings:")
+        for finding in findings:
+            summary.append(
+                f"- {finding.get('control_id')} [{finding.get('severity')}]: "
+                f"{finding.get('finding')} Evidence: {finding.get('evidence')}"
+            )
     corrected = updated.get("corrected_document")
     if corrected:
         summary.append("\nAI Corrected Document Draft:")

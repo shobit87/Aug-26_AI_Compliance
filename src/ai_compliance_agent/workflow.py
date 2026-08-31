@@ -19,6 +19,19 @@ from ai_compliance_agent.agents import (
 from ai_compliance_agent.state import WorkflowState
 
 
+def route_after_implementation_review(state: WorkflowState) -> str:
+    """Retry a rejected implementation draft, with a hard loop limit."""
+
+    rejected = any(
+        artifact.get("owner") == "Implementer"
+        and artifact.get("status") == "needs_revision"
+        for artifact in state.get("artifacts", [])
+    )
+    if rejected and state.get("implementation_retries", 0) < 2:
+        return "revise"
+    return "continue"
+
+
 def build_workflow_app():
     graph = StateGraph(WorkflowState)
     graph.add_node("coordinator", coordinator)
@@ -37,7 +50,11 @@ def build_workflow_app():
     graph.add_edge("task_planner", "planner_critic")
     graph.add_edge("planner_critic", "implementer")
     graph.add_edge("implementer", "implementer_critic")
-    graph.add_edge("implementer_critic", "compliance_agent")
+    graph.add_conditional_edges(
+        "implementer_critic",
+        route_after_implementation_review,
+        {"revise": "implementer", "continue": "compliance_agent"},
+    )
     graph.add_edge("compliance_agent", "compliance_critic")
     graph.add_edge("compliance_critic", "documentation_agent")
     graph.add_edge("documentation_agent", END)

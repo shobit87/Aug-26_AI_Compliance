@@ -1,74 +1,98 @@
-# AI Compliance Agent (LangGraph)
+# AI Compliance Agent
 
-This project demonstrates how to frame an "agentic" compliance workflow as a LangGraph-based micro-architecture. It wires a coordinator, multiple specialized agents, and critic nodes to enforce deterministic validations before any result gets surfaced.
+An interview-focused LangGraph workflow for reviewing change-management documents against a small, explicit SOC 2 control catalog. The project supports a reproducible deterministic analyzer and an optional OpenAI-backed analyzer that returns the same validated Pydantic schema.
 
-## Features
+> This project assists document review. It is not legal advice, an audit opinion, or proof of compliance.
 
-- Coordinator node that decomposes a request into actionable compliance tasks.
-- Specialized agents for planning, implementation, compliance review, and documentation.
-- Critic nodes that validate each agent's work and trigger repair loops when needed.
-- Shared typed state that persists decisions, artifacts, and validation status through the graph.
-- CLI runner (`python -m ai_compliance_agent.runner`) that executes the workflow end-to-end on sample input.
-- FastAPI and Streamlit UIs with document reviewer metrics (tone, grammar score, recommendations, and AI-corrected drafts).
-- Pytest-based regression tests for the critic logic and state transitions.
+## What it demonstrates
 
-## Getting Started
+- Typed LangGraph state and modular coordinator, reviewer, planner, implementer, critic, compliance, and documentation nodes.
+- A real bounded critic repair loop: rejected implementation drafts return to the implementer and are reviewed again.
+- Evidence-backed findings with control ID, severity, recommendation, and confidence.
+- SOC 2 change-management catalog covering CC8.1, CC6.1, CC7.2, CC7.4, and CC3.2.
+- Deterministic analysis for tests and offline demos.
+- Optional OpenAI structured-output analysis using the Responses API.
+- PDF, DOCX, TXT, and Markdown ingestion with type checks and a 10 MB upload limit.
+- DOCX paragraph, table, header, and footer extraction.
+- FastAPI, Streamlit, and CLI entry points.
+- Corrected DOCX export and automatic temporary-file cleanup.
 
-```bash
+## Limitations
+
+- The included catalog is deliberately narrow and is not a complete SOC 2 framework.
+- Scanned PDFs require OCR, which is not included.
+- The deterministic analyzer uses transparent keyword evidence and is not an AI model.
+- Model-backed findings require human review and can be incorrect.
+- Authentication, persistent audit storage, rate limiting, and enterprise retention controls are not included.
+
+## Setup
+
+```powershell
 python -m venv .venv
-.venv\Scripts\activate
-pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+Copy-Item .env.example .env
 ```
 
-Populate the `OPENAI_API_KEY` or compatible LLM credentials in a `.env` file if you want to swap the stubbed models with live ones.
+The default mode is deterministic and makes no external model calls:
 
-> **Note:** The project includes a minimal LangGraph compatibility stub so tests can run in environments where the real dependency is unavailable. Once you `pip install langgraph`, the workflow automatically switches to the official implementation.
-
-## Running the Workflow
-
-```bash
-python -m ai_compliance_agent.runner "Create a SOC2 change-management checklist"
+```env
+COMPLIANCE_ANALYZER=deterministic
 ```
 
-Pass the optional `--document-path` (`-d`) flag to analyze an existing policy document (PDF, DOCX, or plain text). The document reviewer will extract the text, highlight missing sections, map each gap to compliance findings, and emit an AI-corrected draft within the CLI output.
+To enable OpenAI-backed structured analysis:
 
-```bash
-python -m ai_compliance_agent.runner \
-  "Validate SOC2 change policy" \
-  --document-path docs/change_policy.docx
+```env
+COMPLIANCE_ANALYZER=openai
+OPENAI_API_KEY=your-project-key
+OPENAI_MODEL=gpt-4o-mini
 ```
 
-## Web UI (FastAPI)
+Create API keys through the OpenAI platform and never commit `.env`.
 
-Run the bundled FastAPI server to upload documents through a browser:
+## Run
 
-```bash
+FastAPI:
+
+```powershell
 uvicorn ai_compliance_agent.server:app --reload
 ```
 
-Then open http://127.0.0.1:8000 to submit a compliance request plus an optional PDF/DOCX/text file. The page renders the generated documentation, recommendations, corrected draft, and workflow history.
+Streamlit:
 
-## Streamlit UI
-
-Alternatively, launch the Streamlit dashboard:
-
-```bash
-streamlit run ai_compliance_agent/streamlit_app.py
+```powershell
+streamlit run src/ai_compliance_agent/streamlit_app.py
 ```
 
-This provides an interactive sidebar to enter the compliance request, upload files, preview the corrected draft, and download AI-generated recommendations directly from the browser.
+CLI:
 
-## Running the Tests
+```powershell
+python -m ai_compliance_agent.runner "Review SOC2 change policy" -d .\policy.docx
+```
 
-```bash
+## Test
+
+```powershell
 pytest
 ```
 
-## Extending the Graph
+The tests cover workflow execution, bounded critic repair, upload validation, structured deterministic findings, FastAPI integration, Streamlit imports, and valid nonblank DOCX export.
 
-1. Add a new state field in `ai_compliance_agent/state.py`.
-2. Implement the agent logic under `ai_compliance_agent/agents/`.
-3. Register the node and any critic in `ai_compliance_agent/workflow.py`.
-4. Add unit tests or sample transcripts under `tests/`.
+## Architecture
 
-Because each node focuses on a narrow responsibility, you can iterate on models or tools independently without touching the rest of the workflow—exactly what interviewers expect when they call "agentic AI" a micro-architecture.
+```text
+Coordinator -> Document Reviewer -> Task Planner -> Planner Critic
+                                           |
+                                           v
+                                    Implementer <----+
+                                           |         |
+                                           v         |
+                                  Implementer Critic-+
+                                           |
+                                           v
+                              Compliance Agent -> Compliance Critic
+                                           |
+                                           v
+                                  Documentation Agent
+```
+
+The revision edge is bounded by `implementation_retries` to prevent infinite loops.

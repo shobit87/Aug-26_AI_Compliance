@@ -7,12 +7,13 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
 
 from ai_compliance_agent.state import ensure_defaults
 from ai_compliance_agent.workflow import build_workflow_app
+from ai_compliance_agent.uploads import UploadValidationError, validate_upload
 
 app = FastAPI(title="AI Compliance Agent")
 workflow_app = build_workflow_app()
@@ -93,9 +94,12 @@ async def analyze(
     tmp_path: Optional[Path] = None
     try:
         if document:
-            suffix = Path(document.filename or "").suffix
-            handle = tempfile.NamedTemporaryFile(delete=False, suffix=suffix or ".txt")
             data = await document.read()
+            try:
+                suffix = validate_upload(document.filename or "", data)
+            except UploadValidationError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            handle = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
             handle.write(data)
             handle.flush()
             tmp_path = Path(handle.name)

@@ -12,6 +12,8 @@ import html
 import streamlit as st
 from ai_compliance_agent.state import ensure_defaults
 from ai_compliance_agent.workflow import build_workflow_app
+from ai_compliance_agent.exports import corrected_docx_bytes
+from ai_compliance_agent.uploads import UploadValidationError, validate_upload
 
 workflow_app = build_workflow_app()
 
@@ -61,9 +63,10 @@ CARD_STYLES = """
 def _persist_upload(upload) -> Optional[str]:
     if not upload:
         return None
-    suffix = Path(upload.name or "").suffix or ".txt"
+    data = upload.getvalue()
+    suffix = validate_upload(upload.name or "", data)
     temp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-    temp.write(upload.getvalue())
+    temp.write(data)
     temp.flush()
     temp.close()
     return temp.name
@@ -89,7 +92,7 @@ def _render_results(result: dict) -> None:
     grammar_value = result.get("grammar_score")
     metric_cols[3].metric(
         "Grammar Score",
-        f"{grammar_value:.2f}" if grammar_value is not None else "N/A",
+        f"{grammar_value:.1f}%" if grammar_value is not None else "N/A",
     )
 
     main_col, sidebar_col = st.columns((2.2, 1))
@@ -123,13 +126,33 @@ def _render_results(result: dict) -> None:
                     unsafe_allow_html=True,
                 )
                 st.download_button(
-                    "Download corrected draft",
-                    corrected,
-                    file_name="corrected_document.txt",
+                    "Download corrected DOCX",
+                    corrected_docx_bytes(corrected),
+                    file_name="corrected_document.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True,
                 )
             else:
                 st.info("No corrections were required for this document.")
+
+        findings = result.get("compliance_findings", [])
+        if findings:
+            st.markdown("#### Evidence-backed Control Findings")
+            st.dataframe(
+                [
+                    {
+                        "Control": item.get("control_id"),
+                        "Severity": item.get("severity"),
+                        "Finding": item.get("finding"),
+                        "Evidence": item.get("evidence"),
+                        "Confidence": f"{float(item.get('confidence', 0)):.0%}",
+                    }
+                    for item in findings
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+        st.caption(f"Analyzer mode: {result.get('analysis_mode') or 'workflow-only'}")
 
         st.markdown("#### Generated Documentation")
         doc_text = result.get("documentation") or "No documentation produced."
@@ -224,11 +247,20 @@ def main():
             st.error("Please provide a compliance request.")
             return
 
-        temp_path = _persist_upload(uploaded_file)
+        try:
+            temp_path = _persist_upload(uploaded_file)
+        except UploadValidationError as exc:
+            st.error(str(exc))
+            return
         state = {"request": request_text, "document_path": temp_path}
-        with st.spinner("Running workflow..."):
-            result = workflow_app.invoke(state)
-        _cleanup(temp_path)
+        try:
+            with st.spinner("Running workflow..."):
+                result = workflow_app.invoke(state)
+        except Exception as exc:
+            st.error(f"Analysis failed: {exc}")
+            return
+        finally:
+            _cleanup(temp_path)
         with result_container:
             _render_results(result)
 

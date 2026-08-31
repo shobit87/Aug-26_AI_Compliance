@@ -14,12 +14,17 @@ def test_workflow_generates_documentation():
     assert "Coordinator received request" in " ".join(result["history"])
 
 
-def test_compliance_critic_limits_gap_volume():
+def test_implementation_critic_triggers_bounded_repair_loop():
     app = build_workflow_app()
     result = app.invoke({"request": "GDPR + HIPAA gap review"})
     ensure_defaults(result)
 
-    assert len(result["compliance_gaps"]) <= 5
+    assert result["implementation_retries"] == 1
+    implementation = next(
+        item for item in result["artifacts"] if item["owner"] == "Implementer"
+    )
+    assert implementation["status"] == "approved"
+    assert "requested revisions" in " ".join(result["history"])
 
 
 def test_document_reviewer_enriches_state(tmp_path):

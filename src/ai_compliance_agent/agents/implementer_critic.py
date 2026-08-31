@@ -26,6 +26,7 @@ def implementer_critic(state: WorkflowState) -> WorkflowState:
                 "Implementation plan must mention evidence collection and remediation tracking."
             )
             reviewed.append(request_revision(artifact, note))
+            updated["implementation_retries"] = updated.get("implementation_retries", 0) + 1
             append_history(updated, "ImplementerCritic requested revisions.")
         else:
             reviewed.append(approve_artifact(artifact))

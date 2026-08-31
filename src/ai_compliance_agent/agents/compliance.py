@@ -6,6 +6,12 @@ from ai_compliance_agent.state import WorkflowState, append_history, ensure_defa
 def compliance_agent(state: WorkflowState) -> WorkflowState:
     updated: WorkflowState = dict(state)
     ensure_defaults(updated)
+    if updated.get("compliance_findings"):
+        append_history(
+            updated,
+            "ComplianceAgent retained evidence-backed control findings from DocumentReviewer.",
+        )
+        return updated
     heuristics = [
         ("change", "Change management approvals missing."),
         ("asset", "Asset inventory linkage unclear."),

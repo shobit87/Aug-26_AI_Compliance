@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Literal, Sequence, TypedDict
+from typing import Any, List, Literal, Sequence, TypedDict
 
 
 ArtifactStatus = Literal["draft", "needs_revision", "approved"]
@@ -25,6 +25,10 @@ class WorkflowState(TypedDict, total=False):
     grammar_score: float | None
     document_recommendations: List[str]
     corrected_document: str | None
+    analysis_summary: str | None
+    analysis_mode: str | None
+    compliance_findings: List[dict[str, Any]]
+    implementation_retries: int
     tasks: List[str]
     artifacts: List[Artifact]
     compliance_gaps: List[str]
@@ -46,6 +50,10 @@ def ensure_defaults(state: WorkflowState) -> WorkflowState:
     state.setdefault("grammar_score", None)
     state.setdefault("document_recommendations", [])
     state.setdefault("corrected_document", None)
+    state.setdefault("analysis_summary", None)
+    state.setdefault("analysis_mode", None)
+    state.setdefault("compliance_findings", [])
+    state.setdefault("implementation_retries", 0)
     return state
 
 
