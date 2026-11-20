@@ -34,7 +34,8 @@ jobs:
 
   deploy:
     needs: test
-    if: github.ref == 'refs/heads/main'
+    # Deploy runs only when triggered manually, so pushes without Azure credentials stay green
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     steps:
