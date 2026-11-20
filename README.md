@@ -1,6 +1,8 @@
 # AI Compliance Agent
 
-An interview-focused LangGraph workflow for reviewing change-management documents against a small, explicit SOC 2 control catalog. The project supports a reproducible deterministic analyzer and an optional OpenAI-backed analyzer that returns the same validated Pydantic schema.
+[![ci-cd](https://github.com/shobit87/Aug-26_AI_Compliance/actions/workflows/deploy.yml/badge.svg)](https://github.com/shobit87/Aug-26_AI_Compliance/actions/workflows/deploy.yml) ![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![LangGraph](https://img.shields.io/badge/LangGraph-multi--agent-purple)
+
+A multi agent LangGraph workflow for reviewing change-management documents against a small, explicit SOC 2 control catalog. The project supports a reproducible deterministic analyzer and an optional OpenAI-backed analyzer that returns the same validated Pydantic schema.
 
 > This project assists document review. It is not legal advice, an audit opinion, or proof of compliance.
 
